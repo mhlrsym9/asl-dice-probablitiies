@@ -1,0 +1,669 @@
+(ns asl-dice-probablitiies.core
+  (:require [asl-dice-probablitiies.german :as g]
+            [asl-dice-probablitiies.russian :as r]
+            [asl-dice-probablitiies.infantry :as infantry])
+  (:gen-class))
+
+(def d6 (range 1 7))
+
+(def base-morale 8)
+
+(defn fails-two-fp? [attack-roll morale-check-roll dm morale]
+  (let [final-dr (+ attack-roll dm)]
+    (cond (< final-dr 0) true
+          (= final-dr 1) true
+          (= final-dr 2) true
+          (= final-dr 3) (> (+ morale-check-roll 1) morale)
+          (= final-dr 4) (> (+ morale-check-roll 1) morale)
+          (= final-dr 5) (> morale-check-roll morale)
+          :else false)))
+
+(defn fails-four-fp? [attack-roll morale-check-roll dm morale]
+  (let [final-dr (+ attack-roll dm)]
+    (cond (< final-dr 0) true
+          (= final-dr 1) true
+          (= final-dr 2) true
+          (= final-dr 3) (> (+ morale-check-roll 2) morale)
+          (= final-dr 4) (> (+ morale-check-roll 1) morale)
+          (= final-dr 5) (> (+ morale-check-roll 1) morale)
+          (= final-dr 6) (> morale-check-roll morale)
+          :else false)))
+
+(defn fails-six-fp? [attack-roll morale-check-roll dm morale]
+  (let [final-dr (+ attack-roll dm)]
+    (cond (< final-dr 0) true
+          (= final-dr 1) true
+          (= final-dr 2) true
+          (= final-dr 3) true
+          (= final-dr 4) (> (+ morale-check-roll 2) morale)
+          (= final-dr 5) (> (+ morale-check-roll 1) morale)
+          (= final-dr 6) (> (+ morale-check-roll 1) morale)
+          (= final-dr 7) (> morale-check-roll morale)
+          :else false)))
+
+(defn fails-eight-fp? [attack-roll morale-check-roll dm morale]
+  (let [final-dr (+ attack-roll dm)]
+    (cond (< final-dr 0) true
+          (= final-dr 1) true
+          (= final-dr 2) true
+          (= final-dr 3) true
+          (= final-dr 4) (> (+ morale-check-roll 2) morale)
+          (= final-dr 5) (> (+ morale-check-roll 2) morale)
+          (= final-dr 6) (> (+ morale-check-roll 1) morale)
+          (= final-dr 7) (> (+ morale-check-roll 1) morale)
+          (= final-dr 8) (> morale-check-roll morale)
+          :else false)))
+
+(defn fails-twelve-fp? [attack-roll morale-check-roll dm morale]
+  (let [final-dr (+ attack-roll dm)]
+    (cond (< final-dr 0) true
+          (= final-dr 1) true
+          (= final-dr 2) true
+          (= final-dr 3) true
+          (= final-dr 4) (> (+ morale-check-roll 3) morale)
+          (= final-dr 5) (> (+ morale-check-roll 2) morale)
+          (= final-dr 6) (> (+ morale-check-roll 2) morale)
+          (= final-dr 7) (> (+ morale-check-roll 1) morale)
+          (= final-dr 8) (> (+ morale-check-roll 1) morale)
+          (= final-dr 9) (> morale-check-roll morale)
+          :else false)))
+
+(defn fails-sixteen-fp? [attack-roll morale-check-roll dm morale]
+  (let [final-dr (+ attack-roll dm)]
+    (cond (< final-dr 0) true
+          (= final-dr 1) true
+          (= final-dr 2) true
+          (= final-dr 3) true
+          (= final-dr 4) true
+          (= final-dr 5) (> (+ morale-check-roll 3) morale)
+          (= final-dr 6) (> (+ morale-check-roll 2) morale)
+          (= final-dr 7) (> (+ morale-check-roll 2) morale)
+          (= final-dr 8) (> (+ morale-check-roll 1) morale)
+          (= final-dr 9) (> (+ morale-check-roll 1) morale)
+          (= final-dr 10) (> morale-check-roll morale)
+          :else false)))
+
+(defn fails-twenty-fp? [attack-roll morale-check-roll dm morale]
+  (let [final-dr (+ attack-roll dm)]
+    (cond (< final-dr 0) true
+          (= final-dr 1) true
+          (= final-dr 2) true
+          (= final-dr 3) true
+          (= final-dr 4) true
+          (= final-dr 5) (> (+ morale-check-roll 4) morale)
+          (= final-dr 6) (> (+ morale-check-roll 3) morale)
+          (= final-dr 7) (> (+ morale-check-roll 2) morale)
+          (= final-dr 8) (> (+ morale-check-roll 2) morale)
+          (= final-dr 9) (> (+ morale-check-roll 1) morale)
+          (= final-dr 10) (> (+ morale-check-roll 1) morale)
+          (= final-dr 11) (> morale-check-roll morale)
+          :else false)))
+
+(defn fails-twenty-four-fp? [attack-roll morale-check-roll dm morale]
+  (let [final-dr (+ attack-roll dm)]
+    (cond (< final-dr 0) true
+          (= final-dr 1) true
+          (= final-dr 2) true
+          (= final-dr 3) true
+          (= final-dr 4) true
+          (= final-dr 5) true
+          (= final-dr 6) (> (+ morale-check-roll 4) morale)
+          (= final-dr 7) (> (+ morale-check-roll 3) morale)
+          (= final-dr 8) (> (+ morale-check-roll 2) morale)
+          (= final-dr 9) (> (+ morale-check-roll 2) morale)
+          (= final-dr 10) (> (+ morale-check-roll 1) morale)
+          (= final-dr 11) (> (+ morale-check-roll 1) morale)
+          (= final-dr 12) (> morale-check-roll morale)
+          :else false)))
+
+(defn- has-cowered? [cd1 wd1 is-leader-directed?]
+  (and (= cd1 wd1) (not is-leader-directed?)))
+
+(defn does-unit-break? [cd1 wd1 cd2 wd2 fp dm morale is-leader-directed?]
+  (let [attack-roll (+ cd1 wd1)
+        morale-check-roll (+ cd2 wd2)
+        cowered? (has-cowered? cd1 wd1 is-leader-directed?)]
+    (cond (= fp 4) (if cowered?
+                     (fails-two-fp? attack-roll morale-check-roll dm morale)
+                     (fails-four-fp? attack-roll morale-check-roll dm morale))
+          (= fp 6) (if cowered?
+                     (fails-four-fp? attack-roll morale-check-roll dm morale)
+                     (fails-six-fp? attack-roll morale-check-roll dm morale))
+          (= fp 8) (if cowered?
+                     (fails-six-fp? attack-roll morale-check-roll dm morale)
+                     (fails-eight-fp? attack-roll morale-check-roll dm morale))
+          (= fp 12) (if cowered?
+                     (fails-eight-fp? attack-roll morale-check-roll dm morale)
+                     (fails-twelve-fp? attack-roll morale-check-roll dm morale))
+          (= fp 16) (if cowered?
+                     (fails-twelve-fp? attack-roll morale-check-roll dm morale)
+                     (fails-sixteen-fp? attack-roll morale-check-roll dm morale))
+          (= fp 20) (if cowered?
+                      (fails-sixteen-fp? attack-roll morale-check-roll dm morale)
+                      (fails-twenty-fp? attack-roll morale-check-roll dm morale))
+          (= fp 24) (if cowered?
+                      (fails-twenty-fp? attack-roll morale-check-roll dm morale)
+                      (fails-twenty-four-fp? attack-roll morale-check-roll dm morale)))))
+
+(defn- is-leader? [{:keys [type]}]
+  (= :leader type))
+
+(defn- is-hero? [{:keys [type]}]
+  (= :here type))
+
+(defn- is-smc? [counter]
+  (or (is-leader? counter)
+      (is-hero? counter)))
+
+(defn- is-lmg? [{:keys [type]}]
+  (= :lmg type))
+
+(defn- is-mmg? [{:keys [type]}]
+  (= :mmg type))
+
+(defn- is-hmg? [{:keys [type]}]
+  (= :hmg type))
+
+(defn- is-mg? [counter]
+  (or (is-lmg? counter)
+      (is-mmg? counter)
+      (is-hmg? counter)))
+
+(defn- is-dc? [{:keys [type]}]
+  (= :dc type))
+
+(defn- is-flamethrower? [{:keys [type]}]
+  (= :flamethrower type))
+
+(defn- is-atr? [{:keys [type]}]
+  (= :atr type))
+
+(defn- is-bazooka? [{:keys [type]}]
+  (= :bazooka type))
+
+(defn- is-psk? [{:keys [type]}]
+  (= :psk type))
+
+(defn- is-light-anti-tank-weapon? [counter]
+  (or (is-atr? counter)
+      (is-bazooka? counter)
+      (is-psk? counter)))
+
+(defn- is-light-mortar? [{:keys [type]}]
+  (= :light-mortar type))
+
+(defn- is-sw? [counter]
+  (or (is-mg? counter)
+      (is-dc? counter)
+      (is-flamethrower? counter)
+      (is-light-anti-tank-weapon? counter)
+      (is-light-mortar? counter)))
+
+(defn- is-squad? [{:keys [type]}]
+  (= :squad type))
+
+(defn- is-half-squad? [{:keys [type]}]
+  (= :half-squad type))
+
+(defn- is-mmc? [counter]
+  (or (is-squad? counter) (is-half-squad? counter)))
+
+(defn- is-leader-in-units? [{:keys [units]}]
+  (seq (filter is-leader? units)))
+
+(defn- does-location-have-leader? [{:keys [stack]}]
+  (seq (filter is-leader-in-units? stack)))
+
+(defn has-fire-group-cowered? [fire-group cd wd]
+  (if (= cd wd)
+    (not-every? does-location-have-leader? fire-group)
+    false))
+
+(defn- is-infantry? [counter]
+  (or (is-leader? counter)
+      (is-squad? counter)
+      (is-half-squad? counter)))
+
+(defn- is-infantry-in-units? [{:keys [units]}]
+  (seq (filter is-infantry? units)))
+
+(defn- is-conscript? [{:keys [class]}]
+  (= :conscript class))
+
+(defn- is-green? [{:keys [class]}]
+  (= :green class))
+
+(defn- is-inexperienced? [counter]
+  (or (is-conscript? counter)
+      (is-green? counter)))
+
+(defn- does-location-have-inexperienced-infantry? [{:keys [stack]}]
+  (seq (filter is-inexperienced? (mapcat :units (filter is-infantry-in-units? stack)))))
+
+(defn can-fire-group-double-cower? [fire-group]
+  (seq (filter does-location-have-inexperienced-infantry? (remove does-location-have-leader? fire-group))))
+
+(defn- adjust-firepower-for-range [range-to-defender {:keys [fp range]}]
+  (cond (> range-to-defender (* 2 range)) 0
+        (> range-to-defender range) (/ fp 2)
+        :else fp))
+
+(defn- calculate-counter-firepower [range-to-defender fp counter]
+  (let [calculate-fp (partial adjust-firepower-for-range range-to-defender)]
+    (cond (is-leader? counter) fp
+          (is-mg? counter) (+ fp (calculate-fp counter))
+          (is-squad? counter) (+ fp (calculate-fp counter))
+          (is-half-squad? counter) (+ fp (calculate-fp counter))
+          :else 0)))
+
+(defn- calculate-units-firepower [range-to-defender fp {:keys [units possessions]}]
+  (let [units-fp (reduce (partial calculate-counter-firepower range-to-defender) 0 units)
+        possessions-fp (reduce (partial calculate-counter-firepower range-to-defender) 0 possessions)]
+    (if (and (is-leader? (first units))
+             (> (count units) 1))
+      (+ fp units-fp (/ possessions-fp 2))
+      (+ fp units-fp possessions-fp))))
+
+(defn calculate-attacker-location-firepower [fp {:keys [stack range]}]
+  (reduce (partial calculate-units-firepower range) fp stack))
+
+(defn- extract-leadership-drm [{:keys [stack]}]
+  (apply min (map :leadership-modifier (filter is-leader? (mapcat :units (filter is-leader-in-units? stack))))))
+
+(defn- calculate-leadership-drm [fire-group]
+  (if (not-every? does-location-have-leader? fire-group)
+    0
+    (apply max (map extract-leadership-drm fire-group))))
+
+(defn total-drm-for-attacker [fire-group]
+  (let [leadership-drm (calculate-leadership-drm fire-group)]
+    leadership-drm))
+
+(defn- calculate-terrain-drm [{:keys [terrain]}]
+  (cond (= :stone-building terrain) 3
+        (= :wooden-building terrain) 2
+        :else 0))
+
+(defn total-drm-for-defender [defender-location]
+  (let [terrain-drm (calculate-terrain-drm defender-location)]
+    terrain-drm))
+
+(defn- adjust-fire-power-two-columns-to-the-left [total-firepower]
+  (cond (>= total-firepower 36) 24
+        (>= total-firepower 30) 20
+        (>= total-firepower 24) 16
+        (>= total-firepower 20) 12
+        (>= total-firepower 16) 8
+        (>= total-firepower 12) 6
+        (>= total-firepower 8) 4
+        (>= total-firepower 6) 2
+        (>= total-firepower 4) 1
+        :else 0))
+
+(defn- adjust-fire-power-one-column-to-the-left [total-firepower]
+  (cond (>= total-firepower 36) 30
+        (>= total-firepower 30) 24
+        (>= total-firepower 24) 20
+        (>= total-firepower 20) 16
+        (>= total-firepower 16) 12
+        (>= total-firepower 12) 8
+        (>= total-firepower 8) 6
+        (>= total-firepower 6) 4
+        (>= total-firepower 4) 2
+        (>= total-firepower 2) 1
+        :else 0))
+
+(defn- process-kia [number defender-location])
+
+(defn- process-7-kia [defender-location]
+  (process-kia 7 defender-location))
+
+(defn- process-6-kia [defender-location]
+  (process-kia 6 defender-location))
+
+(defn- process-5-kia [defender-location]
+  (process-kia 5 defender-location))
+
+(defn- process-4-kia [defender-location]
+  (process-kia 4 defender-location))
+
+(defn- process-3-kia [defender-location]
+  (process-kia 3 defender-location))
+
+(defn- process-2-kia [defender-location]
+  (process-kia 2 defender-location))
+
+(defn- process-1-kia [defender-location]
+  (process-kia 1 defender-location))
+
+(defn- process-k [number defender-location])
+
+(defn- process-k-slash-4 [defender-location]
+  (process-k 4 defender-location))
+
+(defn- process-k-slash-3 [defender-location]
+  (process-k 3 defender-location))
+
+(defn- process-k-slash-2 [defender-location]
+  (process-k 2 defender-location))
+
+(defn- process-k-slash-1 [defender-location]
+  (process-k 1 defender-location))
+
+(defn- process-mc [number defender-location])
+
+(defn- process-4-mc [defender-location]
+  (process-mc 4 defender-location))
+
+(defn- process-3-mc [defender-location]
+  (process-mc 3 defender-location))
+
+(defn- process-2-mc [defender-location]
+  (process-mc 2 defender-location))
+
+(defn- process-1-mc [defender-location]
+  (process-mc 1 defender-location))
+
+(defn- process-nmc [defender-location]
+  (process-mc 0 defender-location))
+
+(defn- process-ptc [{:keys [stack]}])
+
+(defn- process-no-result [defender-location]
+  defender-location)
+
+(defn- process-36-attack [modified-attack-roll defender-location]
+  (let [result-fnc (cond (<= modified-attack-roll 0) process-7-kia
+                         (= modified-attack-roll 1) process-6-kia
+                         (= modified-attack-roll 2) process-5-kia
+                         (= modified-attack-roll 3) process-4-kia
+                         (= modified-attack-roll 4) process-3-kia
+                         (= modified-attack-roll 5) process-2-kia
+                         (= modified-attack-roll 6) process-1-kia
+                         (= modified-attack-roll 7) process-k-slash-4
+                         (= modified-attack-roll 8) process-4-mc
+                         (= modified-attack-roll 9) process-3-mc
+                         (= modified-attack-roll 10) process-2-mc
+                         (= modified-attack-roll 11) process-2-mc
+                         (= modified-attack-roll 12) process-1-mc
+                         (= modified-attack-roll 13) process-1-mc
+                         (= modified-attack-roll 14) process-nmc
+                         (>= modified-attack-roll 15) process-ptc)]
+    (result-fnc defender-location)))
+
+(defn- process-30-attack [modified-attack-roll defender-location]
+  (let [result-fnc (cond (<= modified-attack-roll 0) process-6-kia
+                         (= modified-attack-roll 1) process-5-kia
+                         (= modified-attack-roll 2) process-4-kia
+                         (= modified-attack-roll 3) process-3-kia
+                         (= modified-attack-roll 4) process-2-kia
+                         (= modified-attack-roll 5) process-1-kia
+                         (= modified-attack-roll 6) process-k-slash-4
+                         (= modified-attack-roll 7) process-4-mc
+                         (= modified-attack-roll 8) process-3-mc
+                         (= modified-attack-roll 9) process-2-mc
+                         (= modified-attack-roll 10) process-2-mc
+                         (= modified-attack-roll 11) process-1-mc
+                         (= modified-attack-roll 12) process-1-mc
+                         (= modified-attack-roll 13) process-nmc
+                         (= modified-attack-roll 14) process-ptc
+                         (>= modified-attack-roll 15) process-no-result)]
+    (result-fnc defender-location)))
+
+(defn- process-24-attack [modified-attack-roll defender-location]
+  (let [result-fnc (cond (<= modified-attack-roll 0) process-5-kia
+                         (= modified-attack-roll 1) process-4-kia
+                         (= modified-attack-roll 2) process-3-kia
+                         (= modified-attack-roll 3) process-2-kia
+                         (= modified-attack-roll 4) process-1-kia
+                         (= modified-attack-roll 5) process-k-slash-4
+                         (= modified-attack-roll 6) process-4-mc
+                         (= modified-attack-roll 7) process-3-mc
+                         (= modified-attack-roll 8) process-2-mc
+                         (= modified-attack-roll 9) process-2-mc
+                         (= modified-attack-roll 10) process-1-mc
+                         (= modified-attack-roll 11) process-1-mc
+                         (= modified-attack-roll 12) process-nmc
+                         (= modified-attack-roll 13) process-ptc
+                         (>= modified-attack-roll 14) process-no-result)]
+    (result-fnc defender-location)))
+
+(defn- process-20-attack [modified-attack-roll defender-location]
+  (let [result-fnc (cond (<= modified-attack-roll 0) process-4-kia
+                         (= modified-attack-roll 1) process-3-kia
+                         (= modified-attack-roll 2) process-2-kia
+                         (= modified-attack-roll 3) process-1-kia
+                         (= modified-attack-roll 4) process-k-slash-4
+                         (= modified-attack-roll 5) process-4-mc
+                         (= modified-attack-roll 6) process-3-mc
+                         (= modified-attack-roll 7) process-2-mc
+                         (= modified-attack-roll 8) process-2-mc
+                         (= modified-attack-roll 9) process-1-mc
+                         (= modified-attack-roll 10) process-1-mc
+                         (= modified-attack-roll 11) process-nmc
+                         (= modified-attack-roll 12) process-ptc
+                         (>= modified-attack-roll 13) process-no-result)]
+    (result-fnc defender-location)))
+
+(defn- process-16-attack [modified-attack-roll defender-location]
+  (let [result-fnc (cond (<= modified-attack-roll 0) process-4-kia
+                         (= modified-attack-roll 1) process-3-kia
+                         (= modified-attack-roll 2) process-2-kia
+                         (= modified-attack-roll 3) process-1-kia
+                         (= modified-attack-roll 4) process-k-slash-3
+                         (= modified-attack-roll 5) process-3-mc
+                         (= modified-attack-roll 6) process-2-mc
+                         (= modified-attack-roll 7) process-2-mc
+                         (= modified-attack-roll 8) process-1-mc
+                         (= modified-attack-roll 9) process-1-mc
+                         (= modified-attack-roll 10) process-nmc
+                         (= modified-attack-roll 11) process-ptc
+                         (>= modified-attack-roll 12) process-no-result)]
+    (result-fnc defender-location)))
+
+(defn- process-12-attack [modified-attack-roll defender-location]
+  (let [result-fnc (cond (<= modified-attack-roll 0) process-3-kia
+                         (= modified-attack-roll 1) process-2-kia
+                         (= modified-attack-roll 2) process-1-kia
+                         (= modified-attack-roll 3) process-k-slash-3
+                         (= modified-attack-roll 4) process-3-mc
+                         (= modified-attack-roll 5) process-2-mc
+                         (= modified-attack-roll 6) process-2-mc
+                         (= modified-attack-roll 7) process-1-mc
+                         (= modified-attack-roll 8) process-1-mc
+                         (= modified-attack-roll 9) process-nmc
+                         (= modified-attack-roll 10) process-ptc
+                         (>= modified-attack-roll 11) process-no-result)]
+    (result-fnc defender-location)))
+
+(defn- process-8-attack [modified-attack-roll defender-location]
+  (let [result-fnc (cond (<= modified-attack-roll 0) process-3-kia
+                         (= modified-attack-roll 1) process-2-kia
+                         (= modified-attack-roll 2) process-1-kia
+                         (= modified-attack-roll 3) process-k-slash-2
+                         (= modified-attack-roll 4) process-2-mc
+                         (= modified-attack-roll 5) process-2-mc
+                         (= modified-attack-roll 6) process-1-mc
+                         (= modified-attack-roll 7) process-1-mc
+                         (= modified-attack-roll 8) process-nmc
+                         (= modified-attack-roll 9) process-ptc
+                         (>= modified-attack-roll 10) process-no-result)]
+    (result-fnc defender-location)))
+
+(defn- process-6-attack [modified-attack-roll defender-location]
+  (let [result-fnc (cond (<= modified-attack-roll 0) process-3-kia
+                         (= modified-attack-roll 1) process-2-kia
+                         (= modified-attack-roll 2) process-1-kia
+                         (= modified-attack-roll 3) process-k-slash-2
+                         (= modified-attack-roll 4) process-2-mc
+                         (= modified-attack-roll 5) process-1-mc
+                         (= modified-attack-roll 6) process-1-mc
+                         (= modified-attack-roll 7) process-nmc
+                         (= modified-attack-roll 8) process-ptc
+                         (>= modified-attack-roll 9) process-no-result)]
+    (result-fnc defender-location)))
+
+(defn- process-4-attack [modified-attack-roll defender-location]
+  (let [result-fnc (cond (<= modified-attack-roll 0) process-2-kia
+                         (= modified-attack-roll 1) process-1-kia
+                         (= modified-attack-roll 2) process-k-slash-2
+                         (= modified-attack-roll 3) process-2-mc
+                         (= modified-attack-roll 4) process-1-mc
+                         (= modified-attack-roll 5) process-1-mc
+                         (= modified-attack-roll 6) process-nmc
+                         (= modified-attack-roll 7) process-ptc
+                         (>= modified-attack-roll 8) process-no-result)]
+    (result-fnc defender-location)))
+
+(defn- process-2-attack [modified-attack-roll defender-location]
+  (let [result-fnc (cond (<= modified-attack-roll 0) process-2-kia
+                         (= modified-attack-roll 1) process-1-kia
+                         (= modified-attack-roll 2) process-k-slash-1
+                         (= modified-attack-roll 3) process-1-mc
+                         (= modified-attack-roll 4) process-1-mc
+                         (= modified-attack-roll 5) process-nmc
+                         (= modified-attack-roll 6) process-ptc
+                         (>= modified-attack-roll 7) process-no-result)]
+    (result-fnc defender-location)))
+
+(defn- process-1-attack [modified-attack-roll defender-location]
+  (let [result-fnc (cond (<= modified-attack-roll 0) process-1-kia
+                         (= modified-attack-roll 1) process-k-slash-1
+                         (= modified-attack-roll 2) process-1-mc
+                         (= modified-attack-roll 3) process-1-mc
+                         (= modified-attack-roll 4) process-nmc
+                         (= modified-attack-roll 5) process-ptc
+                         (>= modified-attack-roll 6) process-no-result)]
+    (result-fnc defender-location)))
+
+(defn- process-0-attack [_ defender-location]
+  defender-location)
+
+(defn- analyze-fire-group-attack [{:keys [fire-group total-firepower total-drm]} cd wd defender-location]
+  (let [attack-roll (+ cd wd)
+        adjusted-fire-power (if (has-fire-group-cowered? fire-group cd wd)
+                              (if (can-fire-group-double-cower? fire-group)
+                                (adjust-fire-power-two-columns-to-the-left total-firepower)
+                                (adjust-fire-power-one-column-to-the-left total-firepower))
+                              total-firepower)
+        modified-attack-roll (- attack-roll total-drm)
+        process-attack-fnc (cond (>= adjusted-fire-power 36) process-36-attack
+                                 (>= adjusted-fire-power 30) process-30-attack
+                                 (>= adjusted-fire-power 24) process-24-attack
+                                 (>= adjusted-fire-power 20) process-20-attack
+                                 (>= adjusted-fire-power 16) process-16-attack
+                                 (>= adjusted-fire-power 12) process-12-attack
+                                 (>= adjusted-fire-power 8) process-8-attack
+                                 (>= adjusted-fire-power 6) process-6-attack
+                                 (>= adjusted-fire-power 4) process-4-attack
+                                 (>= adjusted-fire-power 2) process-2-attack
+                                 (>= adjusted-fire-power 1) process-1-attack
+                                 :else process-0-attack)]
+    (process-attack-fnc modified-attack-roll defender-location)))
+
+(defn- execute-fire-group-attack
+  ([] (list))
+  ([defender-location fire-group]
+   (let [fire-group-attack {:fire-group fire-group
+                            :total-firepower (reduce calculate-attacker-location-firepower 0 fire-group)
+                            :total-drm (+ (total-drm-for-attacker fire-group) (total-drm-for-defender defender-location))}]
+     (for [cd d6 wd d6]
+       (analyze-fire-group-attack fire-group-attack cd wd defender-location)))))
+
+(defn- execute-attacks [attacks defender-location]
+  (reduce execute-fire-group-attack defender-location attacks))
+
+(defn -main
+  "I don't do a whole lot ... yet."
+  [& args]
+  (let [defender-location {:stack   (list {:possessions (list)
+                                           :units       (list {:type :leader :morale 9 :leadership-modifier -1 :class :elite :status :unbroken :wounded? false})}
+                                          {:possessions (list {:type :mmg :fp 4 :range 10 :breakdown 11 :malfunctioned? false})
+                                           :units       (list (infantry/initialize r/elite-box-squad))})
+                           :terrain :stone-building}
+        attacker-location-1 {:stack (list {:possessions (list {:type :dc})
+                                           :units       (list {:type :leader :morale 9 :leadership-modifier -1 :class :elite :status :unbroken :wounded? false})}
+                                          {:possessions (list {:type :lmg :fp 3 :range 8 :breakdown 12 :malfunctioned? false})
+                                           :units       (list (infantry/initialize g/elite-circle-squad))})
+                             :range 3}
+        attacker-location-2 {:stack (list {:possessions (list)
+                                           :units       (list (infantry/initialize g/first-line-squad))}
+                                          {:possessions (list)
+                                           :units       (list (infantry/initialize g/first-line-squad))})
+                             :range 4}
+        fire-group-1 (list attacker-location-1)
+        fire-group-2 (list attacker-location-2)
+        fire-group-3 (list attacker-location-1 attacker-location-2)
+        attack-list-1 (list fire-group-1 fire-group-2)
+        attack-list-2 (list fire-group-3)
+        first-attack (execute-attacks attack-list-1 defender-location)
+        second-attack (execute-attacks attack-list-2 defender-location)]
+    (prn second-attack))
+  (let [broken-four-up-two (for [cd1 d6 wd1 d6 cd2 d6 wd2 d6
+                                 :when (does-unit-break? cd1 wd1 cd2 wd2 4 2 base-morale false)]
+                             true)
+        broken-six-up-two (for [cd1 d6 wd1 d6 cd2 d6 wd2 d6
+                                :when (does-unit-break? cd1 wd1 cd2 wd2 6 2 base-morale false)]
+                            true)
+        broken-six-up-three (for [cd1 d6 wd1 d6 cd2 d6 wd2 d6
+                                :when (does-unit-break? cd1 wd1 cd2 wd2 6 3 base-morale false)]
+                            true)
+        broken-four-up-two-then-six-up-three (for [cd1 d6 wd1 d6 cd2 d6 wd2 d6 cd3 d6 wd3 d6 cd4 d6 wd4 d6
+                                                    :when (or (does-unit-break? cd1 wd1 cd2 wd2 4 2 base-morale false)
+                                                              (does-unit-break? cd3 wd3 cd4 wd4 6 3 base-morale false))]
+                                                true)
+        broken-one-eight-up-two (for [cd1 d6 wd1 d6 cd2 d6 wd2 d6
+                                      :when (does-unit-break? cd1 wd1 cd2 wd2 8 2 base-morale false)]
+                                  true)
+        broken-one-eight-up-three (for [cd1 d6 wd1 d6 cd2 d6 wd2 d6
+                                        :when (does-unit-break? cd1 wd1 cd2 wd2 8 3 base-morale false)]
+                                    true)
+        broken-one-twelve-up-three (for [cd1 d6 wd1 d6 cd2 d6 wd2 d6
+                                         :when (does-unit-break? cd1 wd1 cd2 wd2 12 3 base-morale false)]
+                                     true)
+        broken-one-sixteen-up-three (for [cd1 d6 wd1 d6 cd2 d6 wd2 d6
+                                          :when (does-unit-break? cd1 wd1 cd2 wd2 16 3 base-morale false)]
+                                      true)
+        broken-one-twenty-up-three (for [cd1 d6 wd1 d6 cd2 d6 wd2 d6
+                                         :when (does-unit-break? cd1 wd1 cd2 wd2 20 3 base-morale false)]
+                                     true)
+        broken-six-up-three-then-six-up-three (for [cd1 d6 wd1 d6 cd2 d6 wd2 d6 cd3 d6 wd3 d6 cd4 d6 wd4 d6
+                                                      :when (or (does-unit-break? cd1 wd1 cd2 wd2 6 3 base-morale false)
+                                                                (does-unit-break? cd3 wd3 cd4 wd4 6 3 base-morale false))]
+                                                  true)
+        broken-eight-up-two-then-eight-up-three (for [cd1 d6 wd1 d6 cd2 d6 wd2 d6 cd3 d6 wd3 d6 cd4 d6 wd4 d6
+                                                      :when (or (does-unit-break? cd1 wd1 cd2 wd2 8 2 base-morale false)
+                                                                (does-unit-break? cd3 wd3 cd4 wd4 8 3 base-morale false))]
+                                                  true)
+        broken-eight-up-two-then-twelve-up-three (for [cd1 d6 wd1 d6 cd2 d6 wd2 d6 cd3 d6 wd3 d6 cd4 d6 wd4 d6
+                                                       :when (or (does-unit-break? cd1 wd1 cd2 wd2 8 2 base-morale false)
+                                                                 (does-unit-break? cd3 wd3 cd4 wd4 12 3 base-morale false))]
+                                                   true)
+        broken-eight-up-three-then-four-up-two (for [cd1 d6 wd1 d6 cd2 d6 wd2 d6 cd3 d6 wd3 d6 cd4 d6 wd4 d6
+                                                     :when (or (does-unit-break? cd1 wd1 cd2 wd2 8 3 base-morale false)
+                                                               (does-unit-break? cd3 wd3 cd4 wd4 4 2 base-morale false))]
+                                                 true)
+        broken-four-up-one-then-eight-up-two (for [cd1 d6 wd1 d6 cd2 d6 wd2 d6 cd3 d6 wd3 d6 cd4 d6 wd4 d6
+                                                   :when (or (does-unit-break? cd1 wd1 cd2 wd2 8 2 base-morale false)
+                                                             (does-unit-break? cd3 wd3 cd4 wd4 4 1 base-morale false))]
+                                               true)
+        broken-four-up-three-then-two-up-two (for [cd1 d6 wd1 d6 cd2 d6 wd2 d6 cd3 d6 wd3 d6 cd4 d6 wd4 d6
+                                                   :when (or (does-unit-break? cd1 wd1 cd2 wd2 4 3 base-morale false)
+                                                             (does-unit-break? cd3 wd3 cd4 wd4 2 2 base-morale false))]
+                                               true)]
+    ;    (println (float (/ (count broken-four-up-two) (* 6 6 6 6))))
+    ;    (println (float (/ (count broken-six-up-two) (* 6 6 6 6))))
+    ;    (println (float (/ (count broken-six-up-three) (* 6 6 6 6))))
+    ;    (println (float (/ (count broken-four-up-two-then-six-up-three) (* 6 6 6 6 6 6 6 6))))
+    ;    (println (float (/ (count broken-one-eight-up-two) (* 6 6 6 6))))
+    ;    (println (float (/ (count broken-one-eight-up-three) (* 6 6 6 6))))
+    ;    (println (float (/ (count broken-one-twelve-up-three) (* 6 6 6 6))))
+        (println (float (/ (count broken-one-sixteen-up-three) (* 6 6 6 6))))
+    ;    (println (float (/ (count broken-one-twenty-up-three) (* 6 6 6 6))))
+    ;    (println (float (/ (count broken-six-up-three-then-six-up-three) (* 6 6 6 6 6 6 6 6))))
+        (println (float (/ (count broken-eight-up-two-then-eight-up-three) (* 6 6 6 6 6 6 6 6))))
+    ;    (println (float (/ (count broken-eight-up-two-then-twelve-up-three) (* 6 6 6 6 6 6 6 6))))
+    ;    (println (float (/ (count broken-eight-up-three-then-four-up-two) (* 6 6 6 6 6 6 6 6))))
+    (println (float (/ (count broken-four-up-three-then-two-up-two) (* 6 6 6 6 6 6 6 6))))
+    (println (float (/ (count broken-four-up-one-then-eight-up-two) (* 6 6 6 6 6 6 6 6))))))
+
