@@ -2,7 +2,9 @@
   (:require [clojure.test :refer :all]
             [asl-dice-probablitiies.core :refer :all]
             [asl-dice-probablitiies.infantry :as infantry]
-            [asl-dice-probablitiies.german :as g]))
+            [asl-dice-probablitiies.german :as g]
+            [asl-dice-probablitiies.russian :as r]
+            [asl-dice-probablitiies.support-weapons :as sw]))
 
 (deftest a-test
   (testing "FIXME, I fail."
@@ -48,5 +50,8 @@
 
 (deftest c-test
   (testing "Unique ids"
-    (let [attackers (repeatedly 5 (partial infantry/initialize g/first-line-squad))]
-      (is (= "German Squad E" (:id (last attackers)))))))
+    (let [attackers (repeatedly 5 (partial infantry/initialize g/first-line-squad))
+          sws (repeatedly 6 (partial sw/initialize r/mmg))]
+      (is (= "German Squad E" (:id (last attackers))))
+      (is (= "Russian MMG F" (:id (last sws))))
+      (is (= false (:malfunctioned? (last sws)))))))

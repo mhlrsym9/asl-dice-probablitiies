@@ -1,35 +1,41 @@
-(ns asl-dice-probablitiies.infantry)
+(ns asl-dice-probablitiies.infantry
+  (:require [asl-dice-probablitiies.nationalities :as nationalities]
+            [asl-dice-probablitiies.utilities :as utils]))
 
 (def infantry-ids {:squad "A" :half-squad "A" :vehicular-crew "A" :crew "A" :leader "A" :hero "A"})
 
 (def infantry-ids-atom (atom {}))
 
-(defn nationality-name [{:keys [nationality]}]
-  (get {:german "German" :russian "Russian" :american "American"} nationality "Unknown"))
+(def type-names {:squad "Squad" :half-squad "Half Squad" :vehicular-crew "Vehicular Crew" :crew "Crew" :leader "Leader" :hero "Hero"})
 
-(defn type-name [{:keys [type]}]
-  (get {:squad "Squad" :half-squad "Half Squad" :vehicular-crew "Vehicular Crew" :crew "Crew" :leader "Leader" :hero "Hero"} type "Unknown"))
+(defn is-leader? [{:keys [type]}]
+  (= :leader type))
 
-(defn next-letter [l]
-  (if (= "Z" (last l))
-    (apply str (repeat (inc (count l)) "A"))
-    (apply str (repeat (count l) (char (inc (int (first l))))))))
+(defn is-hero? [{:keys [type]}]
+  (= :hero type))
 
-(defn unique-ids [{:keys [nationality]}]
-  (if-let [ids (get @infantry-ids-atom nationality)]
-    ids
-    infantry-ids))
+(defn is-smc? [unit]
+  (or (is-leader? unit)
+      (is-hero? unit)))
 
-(defn unique-id [{:keys [type nationality] :as unit}]
-  (let [ids (unique-ids unit)
-        id (get ids type)
-        next-id (next-letter id)]
-    (swap! infantry-ids-atom assoc nationality (assoc ids type next-id))
-    id))
+(defn is-squad? [{:keys [type]}]
+  (= :squad type))
 
-(defn build-id [unit]
-  (str (nationality-name unit) " " (type-name unit) " " (unique-id unit)))
+(defn is-half-squad? [{:keys [type]}]
+  (= :half-squad type))
 
-(defn initialize [{:keys [type] :as unit}]
-  (assoc unit :id (build-id unit)
-              :status :unbroken))
+(defn is-mmc? [counter]
+  (or (is-squad? counter)
+      (is-half-squad? counter)))
+
+(defn is-infantry? [counter]
+  (or (is-smc? counter)
+      (is-mmc? counter)))
+
+(defn- build-id [unit]
+  (utils/build-id unit infantry-ids-atom type-names infantry-ids))
+
+(defn initialize [unit]
+  (assoc (if (is-smc? unit) (assoc unit :wounded? false) unit)
+    :id (build-id unit)
+    :status :unbroken))

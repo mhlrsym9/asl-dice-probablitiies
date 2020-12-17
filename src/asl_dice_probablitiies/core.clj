@@ -1,7 +1,8 @@
 (ns asl-dice-probablitiies.core
   (:require [asl-dice-probablitiies.german :as g]
             [asl-dice-probablitiies.russian :as r]
-            [asl-dice-probablitiies.infantry :as infantry])
+            [asl-dice-probablitiies.infantry :as infantry]
+            [asl-dice-probablitiies.support-weapons :as sw])
   (:gen-class))
 
 (def d6 (range 1 7))
@@ -145,16 +146,6 @@
                       (fails-twenty-fp? attack-roll morale-check-roll dm morale)
                       (fails-twenty-four-fp? attack-roll morale-check-roll dm morale)))))
 
-(defn- is-leader? [{:keys [type]}]
-  (= :leader type))
-
-(defn- is-hero? [{:keys [type]}]
-  (= :here type))
-
-(defn- is-smc? [counter]
-  (or (is-leader? counter)
-      (is-hero? counter)))
-
 (defn- is-lmg? [{:keys [type]}]
   (= :lmg type))
 
@@ -199,17 +190,8 @@
       (is-light-anti-tank-weapon? counter)
       (is-light-mortar? counter)))
 
-(defn- is-squad? [{:keys [type]}]
-  (= :squad type))
-
-(defn- is-half-squad? [{:keys [type]}]
-  (= :half-squad type))
-
-(defn- is-mmc? [counter]
-  (or (is-squad? counter) (is-half-squad? counter)))
-
 (defn- is-leader-in-units? [{:keys [units]}]
-  (seq (filter is-leader? units)))
+  (seq (filter infantry/is-leader? units)))
 
 (defn- does-location-have-leader? [{:keys [stack]}]
   (seq (filter is-leader-in-units? stack)))
@@ -219,13 +201,8 @@
     (not-every? does-location-have-leader? fire-group)
     false))
 
-(defn- is-infantry? [counter]
-  (or (is-leader? counter)
-      (is-squad? counter)
-      (is-half-squad? counter)))
-
 (defn- is-infantry-in-units? [{:keys [units]}]
-  (seq (filter is-infantry? units)))
+  (seq (filter infantry/is-infantry? units)))
 
 (defn- is-conscript? [{:keys [class]}]
   (= :conscript class))
@@ -250,16 +227,16 @@
 
 (defn- calculate-counter-firepower [range-to-defender fp counter]
   (let [calculate-fp (partial adjust-firepower-for-range range-to-defender)]
-    (cond (is-leader? counter) fp
+    (cond (infantry/is-leader? counter) fp
           (is-mg? counter) (+ fp (calculate-fp counter))
-          (is-squad? counter) (+ fp (calculate-fp counter))
-          (is-half-squad? counter) (+ fp (calculate-fp counter))
+          (infantry/is-squad? counter) (+ fp (calculate-fp counter))
+          (infantry/is-half-squad? counter) (+ fp (calculate-fp counter))
           :else 0)))
 
 (defn- calculate-units-firepower [range-to-defender fp {:keys [units possessions]}]
   (let [units-fp (reduce (partial calculate-counter-firepower range-to-defender) 0 units)
         possessions-fp (reduce (partial calculate-counter-firepower range-to-defender) 0 possessions)]
-    (if (and (is-leader? (first units))
+    (if (and (infantry/is-leader? (first units))
              (> (count units) 1))
       (+ fp units-fp (/ possessions-fp 2))
       (+ fp units-fp possessions-fp))))
@@ -268,7 +245,7 @@
   (reduce (partial calculate-units-firepower range) fp stack))
 
 (defn- extract-leadership-drm [{:keys [stack]}]
-  (apply min (map :leadership-modifier (filter is-leader? (mapcat :units (filter is-leader-in-units? stack))))))
+  (apply min (map :leadership-modifier (filter infantry/is-leader? (mapcat :units (filter is-leader-in-units? stack))))))
 
 (defn- calculate-leadership-drm [fire-group]
   (if (not-every? does-location-have-leader? fire-group)
@@ -577,13 +554,13 @@
   "I don't do a whole lot ... yet."
   [& args]
   (let [defender-location {:stack   (list {:possessions (list)
-                                           :units       (list {:type :leader :morale 9 :leadership-modifier -1 :class :elite :status :unbroken :wounded? false})}
-                                          {:possessions (list {:type :mmg :fp 4 :range 10 :breakdown 11 :malfunctioned? false})
+                                           :units       (list (infantry/initialize r/nine-minus-one-leader))}
+                                          {:possessions (list (sw/initialize r/mmg))
                                            :units       (list (infantry/initialize r/elite-box-squad))})
                            :terrain :stone-building}
         attacker-location-1 {:stack (list {:possessions (list {:type :dc})
-                                           :units       (list {:type :leader :morale 9 :leadership-modifier -1 :class :elite :status :unbroken :wounded? false})}
-                                          {:possessions (list {:type :lmg :fp 3 :range 8 :breakdown 12 :malfunctioned? false})
+                                           :units       (list (infantry/initialize g/nine-minus-one-leader))}
+                                          {:possessions (list (sw/initialize g/lmg))
                                            :units       (list (infantry/initialize g/elite-circle-squad))})
                              :range 3}
         attacker-location-2 {:stack (list {:possessions (list)
