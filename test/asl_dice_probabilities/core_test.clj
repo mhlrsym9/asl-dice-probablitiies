@@ -1,10 +1,10 @@
-(ns asl-dice-probablitiies.core-test
+(ns asl-dice-probabilities.core-test
   (:require [clojure.test :refer :all]
-            [asl-dice-probablitiies.core :refer :all]
-            [asl-dice-probablitiies.infantry :as infantry]
-            [asl-dice-probablitiies.german :as g]
-            [asl-dice-probablitiies.russian :as r]
-            [asl-dice-probablitiies.support-weapons :as sw]))
+            [asl-dice-probabilities.core :refer :all]
+            [asl-dice-probabilities.infantry :as infantry]
+            [asl-dice-probabilities.german :as g]
+            [asl-dice-probabilities.russian :as r]
+            [asl-dice-probabilities.support-weapons :as sw]))
 
 (deftest a-test
   (testing "FIXME, I fail."

@@ -1,8 +1,9 @@
-(ns asl-dice-probablitiies.core
-  (:require [asl-dice-probablitiies.german :as g]
-            [asl-dice-probablitiies.russian :as r]
-            [asl-dice-probablitiies.infantry :as infantry]
-            [asl-dice-probablitiies.support-weapons :as sw])
+(ns asl-dice-probabilities.core
+  (:require [asl-dice-probabilities.german :as g]
+            [asl-dice-probabilities.russian :as r]
+            [asl-dice-probabilities.infantry :as infantry]
+            [asl-dice-probabilities.support-weapons :as sw]
+            [asl-dice-probabilities.utilities :as utils])
   (:gen-class))
 
 (def d6 (range 1 7))
@@ -344,7 +345,53 @@
 (defn- process-nmc [defender-location]
   (process-mc 0 defender-location))
 
-(defn- process-ptc [{:keys [stack]}])
+(defn- sort-leaders [l1 l2]
+  (let [i1 [(:morale l2) (:leadership-modifier l1) (:id l1)]
+        i2 [(:morale l1) (:leadership-modifier l2) (:id l2)]]
+    (compare i1 i2)))
+
+(defn- update-status-to-pinned-in-units [the-id units]
+  (map #(let [{:keys [id]} %] (if (= id the-id) (assoc % :status :pinned) %)) units))
+
+(defn- update-status-to-pinned-in-stack [id stack]
+  (map #(assoc % :units (update-status-to-pinned-in-units id (:units %))) stack))
+
+(defn- find-leadership-drm [id stack]
+  (let [units (flatten (mapcat :units stack))
+        leaders (sort sort-leaders (filter infantry/is-unpinned?
+                                           (filter infantry/is-good-order?
+                                                   (filter #(= :leader (:type %)) units))))]
+    (if (empty? leaders)
+      0
+      (if (= id (:id (first leaders)))
+        0
+        (:leadership-modifier (first leaders))))))
+
+(defn- check-for-pin [{:keys [morale id]} stacks]
+  (for [cd d6 wd d6 s stacks]
+    (let [leadership-drm (find-leadership-drm id s)]
+      (if (>= morale (- (+ cd wd) leadership-drm))
+        s
+        (update-status-to-pinned-in-stack id s)))))
+
+(defn- process-ptc [{:keys [stack]}]
+  (let [units (flatten (mapcat :units stack))
+        leaders (sort sort-leaders (filter infantry/is-unpinned?
+                                           (filter infantry/is-good-order?
+                                                   (filter #(= :leader (:type %)) units))))
+        mmcs (filter infantry/is-unpinned?
+                     (filter infantry/is-good-order?
+                             (filter infantry/is-mmc? units)))]
+    (loop [leaders leaders mmcs mmcs stacks (list stack)]
+      (if (and (empty? leaders) (empty? mmcs))
+        stacks
+        (if (empty? leaders)
+          (let [mmc (first mmcs)
+                new-stacks (check-for-pin mmc stacks)]
+            (recur leaders (rest mmcs) new-stacks))
+          (let [l (first leaders)
+                new-stacks (check-for-pin l stacks)]
+            (recur (rest leaders) mmcs new-stacks)))))))
 
 (defn- process-no-result [defender-location]
   defender-location)
@@ -558,7 +605,7 @@
                                           {:possessions (list (sw/initialize r/mmg))
                                            :units       (list (infantry/initialize r/elite-box-squad))})
                            :terrain :stone-building}
-        attacker-location-1 {:stack (list {:possessions (list {:type :dc})
+        attacker-location-1 {:stack (list {:possessions (list (sw/initialize r/dc))
                                            :units       (list (infantry/initialize g/nine-minus-one-leader))}
                                           {:possessions (list (sw/initialize g/lmg))
                                            :units       (list (infantry/initialize g/elite-circle-squad))})

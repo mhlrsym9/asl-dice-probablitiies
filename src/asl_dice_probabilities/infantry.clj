@@ -1,6 +1,6 @@
-(ns asl-dice-probablitiies.infantry
-  (:require [asl-dice-probablitiies.nationalities :as nationalities]
-            [asl-dice-probablitiies.utilities :as utils]))
+(ns asl-dice-probabilities.infantry
+  (:require [asl-dice-probabilities.nationalities :as nationalities]
+            [asl-dice-probabilities.utilities :as utils]))
 
 (def infantry-ids {:squad "A" :half-squad "A" :vehicular-crew "A" :crew "A" :leader "A" :hero "A"})
 
@@ -14,9 +14,9 @@
 (defn is-hero? [{:keys [type]}]
   (= :hero type))
 
-(defn is-smc? [unit]
-  (or (is-leader? unit)
-      (is-hero? unit)))
+(defn is-smc? [counter]
+  (or (is-leader? counter)
+      (is-hero? counter)))
 
 (defn is-squad? [{:keys [type]}]
   (= :squad type))
@@ -32,10 +32,19 @@
   (or (is-smc? counter)
       (is-mmc? counter)))
 
+(defn is-good-order? [{:keys [status in-melee?]}]
+  (and (= false in-melee?)
+       (or (= :unbroken status)
+           (= :pinned status))))
+
+(defn is-unpinned? [{:keys [status]}]
+  (not= :pinned status))
+
 (defn- build-id [unit]
   (utils/build-id unit infantry-ids-atom type-names infantry-ids))
 
 (defn initialize [unit]
   (assoc (if (is-smc? unit) (assoc unit :wounded? false) unit)
     :id (build-id unit)
-    :status :unbroken))
+    :status :unbroken
+    :in-melee? false))

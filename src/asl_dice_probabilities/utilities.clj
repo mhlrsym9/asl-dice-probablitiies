@@ -1,5 +1,5 @@
-(ns asl-dice-probablitiies.utilities
-  (:require [asl-dice-probablitiies.nationalities :as nationalities]))
+(ns asl-dice-probabilities.utilities
+  (:require [asl-dice-probabilities.nationalities :as nationalities]))
 
 (defn- type-name [{:keys [type]} type-names]
   (get type-names type "Unknown"))
@@ -23,4 +23,3 @@
 
 (defn build-id [unit atom type-names default-ids]
   (str (nationalities/nationality-name unit) " " (type-name unit type-names) " " (unique-id unit atom default-ids)))
-

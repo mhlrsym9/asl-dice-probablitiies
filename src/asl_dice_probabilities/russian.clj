@@ -1,4 +1,6 @@
-(ns asl-dice-probablitiies.russian)
+(ns asl-dice-probabilities.russian
+  (:require [asl-dice-probabilities.utilities :as utils]
+            [asl-dice-probabilities.support-weapons :as sw]))
 
 (defn- add-nationality [unit]
   (assoc unit :nationality :russian))
@@ -9,3 +11,5 @@
 (def nine-minus-one-leader (add-nationality {:type :leader :morale 9 :leadership-modifier -1 :class :elite}))
 
 (def mmg (add-nationality {:type :mmg :fp 4 :range 10 :breakdown 11}))
+
+(def dc (add-nationality sw/dc))
