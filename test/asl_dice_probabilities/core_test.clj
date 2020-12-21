@@ -1,10 +1,17 @@
 (ns asl-dice-probabilities.core-test
   (:require [clojure.test :refer :all]
+            [asl-dice-probabilities.atoms :as atoms]
             [asl-dice-probabilities.core :refer :all]
             [asl-dice-probabilities.infantry :as infantry]
             [asl-dice-probabilities.german :as g]
             [asl-dice-probabilities.russian :as r]
             [asl-dice-probabilities.support-weapons :as sw]))
+
+(defn my-test-fixture [f]
+  (atoms/reset-atoms)
+  (f))
+
+(use-fixtures :each my-test-fixture)
 
 (deftest a-test
   (testing "FIXME, I fail."
@@ -55,3 +62,13 @@
       (is (= "German Squad E" (:id (last attackers))))
       (is (= "Russian MMG F" (:id (last sws))))
       (is (= false (:malfunctioned? (last sws)))))))
+
+(deftest d-test
+  (testing "pin results"
+    (let [defender-location {:stack   (list {:possessions (list)
+                                             :units       (list (infantry/initialize r/nine-minus-one-leader))}
+                                            {:possessions (list (sw/initialize r/mmg))
+                                             :units       (list (infantry/initialize r/elite-box-squad))})
+                             :terrain :stone-building}
+          f (vec (sort (vals (frequencies (process-ptc defender-location)))))]
+      (is (= 0 (compare f [60 156 180 900]))))))

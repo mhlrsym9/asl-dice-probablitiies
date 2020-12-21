@@ -1,10 +1,9 @@
 (ns asl-dice-probabilities.infantry
   (:require [asl-dice-probabilities.nationalities :as nationalities]
-            [asl-dice-probabilities.utilities :as utils]))
+            [asl-dice-probabilities.utilities :as utils]
+            [asl-dice-probabilities.atoms :as atoms]))
 
 (def infantry-ids {:squad "A" :half-squad "A" :vehicular-crew "A" :crew "A" :leader "A" :hero "A"})
-
-(def infantry-ids-atom (atom {}))
 
 (def type-names {:squad "Squad" :half-squad "Half Squad" :vehicular-crew "Vehicular Crew" :crew "Crew" :leader "Leader" :hero "Hero"})
 
@@ -41,7 +40,7 @@
   (not= :pinned status))
 
 (defn- build-id [unit]
-  (utils/build-id unit infantry-ids-atom type-names infantry-ids))
+  (utils/build-id unit atoms/infantry-ids-atom type-names infantry-ids))
 
 (defn initialize [unit]
   (assoc (if (is-smc? unit) (assoc unit :wounded? false) unit)

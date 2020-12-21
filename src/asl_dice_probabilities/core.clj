@@ -370,11 +370,11 @@
 (defn- check-for-pin [{:keys [morale id]} stacks]
   (for [cd d6 wd d6 s stacks]
     (let [leadership-drm (find-leadership-drm id s)]
-      (if (>= morale (- (+ cd wd) leadership-drm))
+      (if (>= morale (+ cd wd leadership-drm))
         s
         (update-status-to-pinned-in-stack id s)))))
 
-(defn- process-ptc [{:keys [stack]}]
+(defn process-ptc [{:keys [stack]}]
   (let [units (flatten (mapcat :units stack))
         leaders (sort sort-leaders (filter infantry/is-unpinned?
                                            (filter infantry/is-good-order?
