@@ -2,8 +2,7 @@
   (:require [asl-dice-probabilities.german :as g]
             [asl-dice-probabilities.russian :as r]
             [asl-dice-probabilities.infantry :as infantry]
-            [asl-dice-probabilities.support-weapons :as sw]
-            [asl-dice-probabilities.utilities :as utils])
+            [asl-dice-probabilities.support-weapons :as sw])
   (:gen-class))
 
 (def d6 (range 1 7))
@@ -147,50 +146,6 @@
                       (fails-twenty-fp? attack-roll morale-check-roll dm morale)
                       (fails-twenty-four-fp? attack-roll morale-check-roll dm morale)))))
 
-(defn- is-lmg? [{:keys [type]}]
-  (= :lmg type))
-
-(defn- is-mmg? [{:keys [type]}]
-  (= :mmg type))
-
-(defn- is-hmg? [{:keys [type]}]
-  (= :hmg type))
-
-(defn- is-mg? [counter]
-  (or (is-lmg? counter)
-      (is-mmg? counter)
-      (is-hmg? counter)))
-
-(defn- is-dc? [{:keys [type]}]
-  (= :dc type))
-
-(defn- is-flamethrower? [{:keys [type]}]
-  (= :flamethrower type))
-
-(defn- is-atr? [{:keys [type]}]
-  (= :atr type))
-
-(defn- is-bazooka? [{:keys [type]}]
-  (= :bazooka type))
-
-(defn- is-psk? [{:keys [type]}]
-  (= :psk type))
-
-(defn- is-light-anti-tank-weapon? [counter]
-  (or (is-atr? counter)
-      (is-bazooka? counter)
-      (is-psk? counter)))
-
-(defn- is-light-mortar? [{:keys [type]}]
-  (= :light-mortar type))
-
-(defn- is-sw? [counter]
-  (or (is-mg? counter)
-      (is-dc? counter)
-      (is-flamethrower? counter)
-      (is-light-anti-tank-weapon? counter)
-      (is-light-mortar? counter)))
-
 (defn- is-leader-in-units? [{:keys [units]}]
   (seq (filter infantry/is-leader? units)))
 
@@ -205,21 +160,14 @@
 (defn- is-infantry-in-units? [{:keys [units]}]
   (seq (filter infantry/is-infantry? units)))
 
-(defn- is-conscript? [{:keys [class]}]
-  (= :conscript class))
-
-(defn- is-green? [{:keys [class]}]
-  (= :green class))
-
-(defn- is-inexperienced? [counter]
-  (or (is-conscript? counter)
-      (is-green? counter)))
-
 (defn- does-location-have-inexperienced-infantry? [{:keys [stack]}]
-  (seq (filter is-inexperienced? (mapcat :units (filter is-infantry-in-units? stack)))))
+  (let [units (mapcat :units (filter is-infantry-in-units? stack))]
+    (or (seq (filter infantry/is-conscript? units))
+        (and (seq (filter infantry/is-green? units))
+             (empty? (filter infantry/is-good-order-leader? units))))))
 
 (defn can-fire-group-double-cower? [fire-group]
-  (seq (filter does-location-have-inexperienced-infantry? (remove does-location-have-leader? fire-group))))
+  (seq (filter does-location-have-inexperienced-infantry? fire-group)))
 
 (defn- adjust-firepower-for-range [range-to-defender {:keys [fp range]}]
   (cond (> range-to-defender (* 2 range)) 0
@@ -229,12 +177,11 @@
 (defn- calculate-counter-firepower [range-to-defender fp counter]
   (let [calculate-fp (partial adjust-firepower-for-range range-to-defender)]
     (cond (infantry/is-leader? counter) fp
-          (is-mg? counter) (+ fp (calculate-fp counter))
-          (infantry/is-squad? counter) (+ fp (calculate-fp counter))
-          (infantry/is-half-squad? counter) (+ fp (calculate-fp counter))
-          :else 0)))
+          (sw/is-mg? counter) (+ fp (calculate-fp counter))
+          (infantry/is-mmc? counter) (+ fp (calculate-fp counter))
+          :else fp)))
 
-(defn- calculate-units-firepower [range-to-defender fp {:keys [units possessions]}]
+(defn- calculate-firepower-of-stack-in-attacker-location [range-to-defender fp {:keys [units possessions]}]
   (let [units-fp (reduce (partial calculate-counter-firepower range-to-defender) 0 units)
         possessions-fp (reduce (partial calculate-counter-firepower range-to-defender) 0 possessions)]
     (if (and (infantry/is-leader? (first units))
@@ -242,8 +189,8 @@
       (+ fp units-fp (/ possessions-fp 2))
       (+ fp units-fp possessions-fp))))
 
-(defn calculate-attacker-location-firepower [fp {:keys [stack range]}]
-  (reduce (partial calculate-units-firepower range) fp stack))
+(defn calculate-firepower-of-attacker-location-in-fire-group [fp {:keys [stack range]}]
+  (reduce (partial calculate-firepower-of-stack-in-attacker-location range) fp stack))
 
 (defn- extract-leadership-drm [{:keys [stack]}]
   (apply min (map :leadership-modifier (filter infantry/is-leader? (mapcat :units (filter is-leader-in-units? stack))))))
@@ -328,7 +275,72 @@
 (defn- process-k-slash-1 [defender-location]
   (process-k 1 defender-location))
 
-(defn- process-mc [number defender-location])
+(defn- sort-leaders [l1 l2]
+  (let [i1 [(:morale l2) (:leadership-modifier l1) (:id l1)]
+        i2 [(:morale l1) (:leadership-modifier l2) (:id l2)]]
+    (compare i1 i2)))
+
+(defn- find-leadership-drm [id stack]
+  (let [units (flatten (mapcat :units stack))
+        leaders (sort sort-leaders (filter infantry/is-unpinned?
+                                           (filter infantry/is-good-order?
+                                                   (filter infantry/is-leader? units))))]
+    (if (empty? leaders)
+      0
+      (if (= id (:id (first leaders)))
+        0
+        (:leadership-modifier (first leaders))))))
+
+(defn- process-break-for-unit [])
+
+(defn- process-break-for-unit-with-id-in-units [the-id units]
+  (map #(let [{:keys [id]} %] (if (= id the-id) (assoc % :status :broken) %)) units))
+
+(defn- process-break-for-unit-with-id-in-stack [id stack]
+  (map #(assoc % :units (process-break-for-unit-with-id-in-units id (:units %))) stack))
+
+(defn- check-for-break [number {:keys [morale id]} stacks]
+  (for [cd d6 wd d6 s stacks]
+    (let [leadership-drm (find-leadership-drm id s)]
+      (if (>= morale (+ cd wd leadership-drm number))
+        s
+        (process-break-for-unit-with-id-in-stack id s)))))
+
+(defn- check-for-wound-elimination [leader stacks]
+  stacks)
+
+(defn- process-leader-loss-morale-check [leader stacks]
+  stacks)
+
+(defn- process-leader-loss-task-check [leader stacks]
+  stacks)
+
+(defn- process-mc [number {:keys [stack]}]
+  (let [units (flatten (mapcat :units stack))
+        leaders (sort sort-leaders (filter infantry/is-leader? units))
+        mmcs (filter infantry/is-mmc? units)]
+    (loop [leaders leaders wounded-leaders (list) eliminated-leaders (list) broken-leaders (list) mmcs mmcs stacks (list stack)]
+      (if (seq leaders)
+        (let [l (first leaders)
+              new-stacks (check-for-break number l stacks)]
+          (recur (rest leaders) wounded-leaders eliminated-leaders broken-leaders mmcs new-stacks))
+        (if (seq wounded-leaders)
+          (let [l (first wounded-leaders)
+                new-stacks (check-for-wound-elimination l stacks)]
+            (recur leaders (rest wounded-leaders) eliminated-leaders broken-leaders mmcs new-stacks))
+          (if (seq mmcs)
+            (let [mmc (first mmcs)
+                  new-stacks (check-for-break number mmc stacks)]
+              (recur leaders wounded-leaders eliminated-leaders broken-leaders (rest mmcs) new-stacks))
+            (if (seq eliminated-leaders)
+              (let [l (first eliminated-leaders)
+                    new-stacks (process-leader-loss-morale-check l stacks)]
+                (recur leaders wounded-leaders (rest eliminated-leaders) broken-leaders mmcs new-stacks))
+              (if (seq broken-leaders)
+                (let [l (first broken-leaders)
+                      new-stacks (process-leader-loss-task-check l stacks)]
+                  (recur leaders wounded-leaders eliminated-leaders (rest broken-leaders) mmcs new-stacks))
+                stacks))))))))
 
 (defn- process-4-mc [defender-location]
   (process-mc 4 defender-location))
@@ -345,27 +357,11 @@
 (defn- process-nmc [defender-location]
   (process-mc 0 defender-location))
 
-(defn- sort-leaders [l1 l2]
-  (let [i1 [(:morale l2) (:leadership-modifier l1) (:id l1)]
-        i2 [(:morale l1) (:leadership-modifier l2) (:id l2)]]
-    (compare i1 i2)))
-
 (defn- update-status-to-pinned-in-units [the-id units]
   (map #(let [{:keys [id]} %] (if (= id the-id) (assoc % :status :pinned) %)) units))
 
 (defn- update-status-to-pinned-in-stack [id stack]
   (map #(assoc % :units (update-status-to-pinned-in-units id (:units %))) stack))
-
-(defn- find-leadership-drm [id stack]
-  (let [units (flatten (mapcat :units stack))
-        leaders (sort sort-leaders (filter infantry/is-unpinned?
-                                           (filter infantry/is-good-order?
-                                                   (filter #(= :leader (:type %)) units))))]
-    (if (empty? leaders)
-      0
-      (if (= id (:id (first leaders)))
-        0
-        (:leadership-modifier (first leaders))))))
 
 (defn- check-for-pin [{:keys [morale id]} stacks]
   (for [cd d6 wd d6 s stacks]
@@ -589,7 +585,7 @@
   ([] (list))
   ([defender-location fire-group]
    (let [fire-group-attack {:fire-group fire-group
-                            :total-firepower (reduce calculate-attacker-location-firepower 0 fire-group)
+                            :total-firepower (reduce calculate-firepower-of-attacker-location-in-fire-group 0 fire-group)
                             :total-drm (+ (total-drm-for-attacker fire-group) (total-drm-for-defender defender-location))}]
      (for [cd d6 wd d6]
        (analyze-fire-group-attack fire-group-attack cd wd defender-location)))))
@@ -597,23 +593,30 @@
 (defn- execute-attacks [attacks defender-location]
   (reduce execute-fire-group-attack defender-location attacks))
 
+; It is possible that two (or more) smcs can possess one weapon, so :units needs to be a list, and not just a single entity
+
 (defn -main
   "I don't do a whole lot ... yet."
   [& args]
-  (let [defender-location {:stack   (list {:possessions (list)
-                                           :units       (list (infantry/initialize r/nine-minus-one-leader))}
+  (let [game {:type :aslsk}
+        german-elr {:elr 4}
+        russian-elr {:elr 3}
+        russian-infantry-initialize (partial infantry/initialize russian-elr)
+        german-infantry-initialize (partial infantry/initialize german-elr)
+        defender-location {:stack   (list {:possessions (list)
+                                           :units       (list (russian-infantry-initialize r/nine-minus-one-leader))}
                                           {:possessions (list (sw/initialize r/mmg))
-                                           :units       (list (infantry/initialize r/elite-box-squad))})
+                                           :units       (list (russian-infantry-initialize r/elite-box-squad))})
                            :terrain :stone-building}
         attacker-location-1 {:stack (list {:possessions (list (sw/initialize r/dc))
-                                           :units       (list (infantry/initialize g/nine-minus-one-leader))}
+                                           :units       (list (german-infantry-initialize g/nine-minus-one-leader))}
                                           {:possessions (list (sw/initialize g/lmg))
-                                           :units       (list (infantry/initialize g/elite-circle-squad))})
+                                           :units       (list (german-infantry-initialize g/elite-circle-squad))})
                              :range 3}
         attacker-location-2 {:stack (list {:possessions (list)
-                                           :units       (list (infantry/initialize g/first-line-squad))}
+                                           :units       (list (german-infantry-initialize g/first-line-squad))}
                                           {:possessions (list)
-                                           :units       (list (infantry/initialize g/first-line-squad))})
+                                           :units       (list (german-infantry-initialize g/first-line-squad))})
                              :range 4}
         fire-group-1 (list attacker-location-1)
         fire-group-2 (list attacker-location-2)

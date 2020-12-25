@@ -36,14 +36,28 @@
        (or (= :unbroken status)
            (= :pinned status))))
 
+(defn is-good-order-leader? [unit]
+  (and (is-good-order? unit)
+       (is-leader? unit)))
+
 (defn is-unpinned? [{:keys [status]}]
   (not= :pinned status))
+
+(defn is-conscript? [{:keys [class]}]
+  (= :conscript class))
+
+(defn is-green? [{:keys [class]}]
+  (= :green class))
+
+(defn is-inexperienced? [unit]
+  (or (is-conscript? unit)
+      (is-green? unit)))
 
 (defn- build-id [unit]
   (utils/build-id unit atoms/infantry-ids-atom type-names infantry-ids))
 
-(defn initialize [unit]
-  (assoc (if (is-smc? unit) (assoc unit :wounded? false) unit)
-    :id (build-id unit)
-    :status :unbroken
-    :in-melee? false))
+(defn initialize [elr unit]
+  (merge elr (assoc (if (is-smc? unit) (assoc unit :wounded? false) unit)
+               :id (build-id unit)
+               :status :unbroken
+               :in-melee? false)))

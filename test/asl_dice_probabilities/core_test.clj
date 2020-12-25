@@ -32,9 +32,9 @@
           fire-group-2 (list attacker-location-2)
           fire-group-3 (list attacker-location-1 attacker-location-2)
           fire-group-4 (list attacker-location-1 attacker-location-2 attacker-location-3)]
-      (is (= 8 (reduce calculate-attacker-location-firepower 0 fire-group-1)))
-      (is (= 8 (reduce calculate-attacker-location-firepower 0 fire-group-2)))
-      (is (= 16 (reduce calculate-attacker-location-firepower 0 fire-group-3)))
+      (is (= 8 (reduce calculate-firepower-of-attacker-location-in-fire-group 0 fire-group-1)))
+      (is (= 8 (reduce calculate-firepower-of-attacker-location-in-fire-group 0 fire-group-2)))
+      (is (= 16 (reduce calculate-firepower-of-attacker-location-in-fire-group 0 fire-group-3)))
       (is (= -1 (total-drm-for-attacker fire-group-1)))
       (is (= 0 (total-drm-for-attacker fire-group-2)))
       (is (= 0 (total-drm-for-attacker fire-group-3)))
@@ -48,7 +48,8 @@
 
 (deftest b-test
   (testing "total-drm-for-defender"
-    (let [defender-location {:stack   (list {:possessions (list)
+    (let [russian-infantry-initialize (partial infantry/initialize {:elr 3})
+          defender-location {:stack   (list {:possessions (list)
                                              :units       (list {:type :leader :morale 9 :leadership-modifier -1 :class :elite :status :unbroken :wounded? false})}
                                             {:possessions (list {:type :mmg :fp 4 :range 10 :breakdown 11 :malfunctioned? false})
                                              :units       (list {:type :squad :fp 4 :range 5 :morale 8 :class :elite :status :unbroken})})
@@ -57,7 +58,7 @@
 
 (deftest c-test
   (testing "Unique ids"
-    (let [attackers (repeatedly 5 (partial infantry/initialize g/first-line-squad))
+    (let [attackers (repeatedly 5 (partial infantry/initialize {:elr 3} g/first-line-squad))
           sws (repeatedly 6 (partial sw/initialize r/mmg))]
       (is (= "German Squad E" (:id (last attackers))))
       (is (= "Russian MMG F" (:id (last sws))))
@@ -65,10 +66,11 @@
 
 (deftest d-test
   (testing "pin results"
-    (let [defender-location {:stack   (list {:possessions (list)
-                                             :units       (list (infantry/initialize r/nine-minus-one-leader))}
+    (let [russian-infantry-initialize (partial infantry/initialize {:elr 3})
+          defender-location {:stack   (list {:possessions (list)
+                                             :units       (list (russian-infantry-initialize r/nine-minus-one-leader))}
                                             {:possessions (list (sw/initialize r/mmg))
-                                             :units       (list (infantry/initialize r/elite-box-squad))})
+                                             :units       (list (russian-infantry-initialize r/elite-box-squad))})
                              :terrain :stone-building}
           f (vec (sort (vals (frequencies (process-ptc defender-location)))))]
       (is (= 0 (compare f [60 156 180 900]))))))
