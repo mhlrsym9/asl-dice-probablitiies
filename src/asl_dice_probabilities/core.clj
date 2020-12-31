@@ -309,38 +309,29 @@
 (defn- check-for-wound-elimination [leader stacks]
   stacks)
 
-(defn- process-leader-loss-morale-check [leader stacks]
-  stacks)
+(defn- process-leader-loss-morale-checks [{:keys [leaders stacks]}]
+  (map f leaders)
+  {:leaders leaders :stacks stacks})
 
-(defn- process-leader-loss-task-check [leader stacks]
-  stacks)
+(defn- process-leader-loss-task-checks [{:keys [leaders stacks]}]
+  {:leaders leaders :stacks stacks})
 
 (defn- process-mc [number {:keys [stack]}]
   (let [units (flatten (mapcat :units stack))
         leaders (sort sort-leaders (filter infantry/is-leader? units))
         mmcs (filter infantry/is-mmc? units)]
-    (loop [leaders leaders wounded-leaders (list) eliminated-leaders (list) broken-leaders (list) mmcs mmcs stacks (list stack)]
-      (if (seq leaders)
-        (let [l (first leaders)
-              new-stacks (check-for-break number l stacks)]
-          (recur (rest leaders) wounded-leaders eliminated-leaders broken-leaders mmcs new-stacks))
-        (if (seq wounded-leaders)
-          (let [l (first wounded-leaders)
-                new-stacks (check-for-wound-elimination l stacks)]
-            (recur leaders (rest wounded-leaders) eliminated-leaders broken-leaders mmcs new-stacks))
-          (if (seq mmcs)
-            (let [mmc (first mmcs)
-                  new-stacks (check-for-break number mmc stacks)]
-              (recur leaders wounded-leaders eliminated-leaders broken-leaders (rest mmcs) new-stacks))
-            (if (seq eliminated-leaders)
-              (let [l (first eliminated-leaders)
-                    new-stacks (process-leader-loss-morale-check l stacks)]
-                (recur leaders wounded-leaders (rest eliminated-leaders) broken-leaders mmcs new-stacks))
-              (if (seq broken-leaders)
-                (let [l (first broken-leaders)
-                      new-stacks (process-leader-loss-task-check l stacks)]
-                  (recur leaders wounded-leaders eliminated-leaders (rest broken-leaders) mmcs new-stacks))
-                stacks))))))))
+    (loop [leaders leaders mmcs mmcs stacks (list stack)]
+      (if (and (empty? leaders) (empty? mmcs))
+        (-> {:leaders leaders :stacks stacks}
+            process-leader-loss-morale-checks
+            process-leader-loss-task-checks)
+        (if (empty? leaders)
+          (let [mmc (first mmcs)
+                new-stacks (check-for-break number mmc stacks)]
+            (recur leaders (rest mmcs) new-stacks))
+          (let [l (first leaders)
+                new-stacks (check-for-break number l stacks)]
+            (recur (rest leaders)  mmcs new-stacks)))))))
 
 (defn- process-4-mc [defender-location]
   (process-mc 4 defender-location))
